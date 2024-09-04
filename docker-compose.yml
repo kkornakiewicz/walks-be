@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  osmnx:
+    build: .
+    container_name: osmnx-container
+    volumes:
+      - .:/app  # Mount your local app folder into the container
+    tty: true  # Allows you to open a shell in the container if needed
