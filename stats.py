@@ -80,5 +80,5 @@ def calculate_stats(
     stats_df = pd.DataFrame.from_dict(stats)
 
     # Saving to CSV
-    stats_df.to_csv("./stats.csv", index=False)
+    stats_df.to_csv("./output/stats.csv", index=False)
     return

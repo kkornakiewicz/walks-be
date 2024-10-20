@@ -60,6 +60,8 @@ def df_to_geojson_nodes(df, properties):
 def export_geojson(
     G, raw_files: list[Walk], processed_walks: dict[str, dict[str, list[int]]]
 ):
+    
+    # For performance reasons, I simplify the graph so that the number of nodes and edges is reduced on visualisation
     G_simplified = osmnx.simplify_graph(G)
     nodes = osmnx.convert.graph_to_gdfs(G_simplified, edges=False, node_geometry=False)[["x", "y"]]
     edges = osmnx.convert.graph_to_gdfs(G_simplified, edges=True, nodes=False)
@@ -92,14 +94,14 @@ def export_geojson(
     edges_geojson["name"] = edges_geojson["name"].fillna(value="Unnamed road")
     edges_geojson["visited"] = np.logical_and(np.isin(edges.u,visited_nodes), np.isin(edges.v, visited_nodes))
     
-    nodes_geo = osmnx.convert.graph_to_gdfs(G, edges=False, node_geometry=False)[["x", "y"]]
+    nodes_geo = osmnx.convert.graph_to_gdfs(G_simplified, edges=False, node_geometry=False)[["x", "y"]]
     nodes_geo = nodes_geo.reset_index()
     nodes_geo["visited"] = np.isin(nodes_geo.osmid, visited_nodes)
 
     export_edges = df_to_geojson_edges(edges_geojson, ["name", "osmid","visited"])
-    with open('edges.json', 'w', encoding='utf-8') as f:
+    with open('output/edges.json', 'w', encoding='utf-8') as f:
         json.dump(export_edges, f)
 
     export_nodes = df_to_geojson_nodes(nodes_geo, ["osmid", "visited"])
-    with open('nodes.json', 'w', encoding='utf-8') as f:
+    with open('output/nodes.json', 'w', encoding='utf-8') as f:
         json.dump(export_nodes, f)

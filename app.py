@@ -4,6 +4,7 @@ from preprocessing import process
 import osmnx
 import logging
 from stats import calculate_stats
+import os
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,6 +21,10 @@ def main():
     logging.info("Processing GPX files")
     processed_walks = process(G, raw_files)
     logging.info("Done")
+
+
+    if not os.path.exists("output"):
+        os.makedirs("output")
 
     logging.info("Calculating stats")
     stats = calculate_stats(G, raw_files, processed_walks)
