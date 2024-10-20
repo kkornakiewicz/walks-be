@@ -1,63 +1,41 @@
-from parser import read_gpx_file, read_directory, Waypoint
+import logging
+from parsing import Walk, read_gpx_file, read_directory, Waypoint
 import osmnx
 import geopandas as gpd
-from shapely.geometry import  Point
+from shapely.geometry import Point
 import pandas as pd
 import json
 import os.path
 from os import listdir
 from pathlib import Path
 from multiprocessing import Pool
-from functools import partial
+from scipy.spatial import cKDTree
 
-# Find nodes near a given point
-def process_point(point: Waypoint, G):
-    distance = 20 # in meteres
-    try:
-        found = []
-        box = osmnx.utils_geo.bbox_from_point((point.lat, point.lon), distance)
-        sub = osmnx.truncate.truncate_graph_bbox(G, bbox=box, retain_all=True)
-        found = list(sub.nodes)
-        print(f"Found: {len(found)}")
 
-        # Return tuple of time and found nodes
-        return (point.time, found)
-    except Exception as e:
-        print("No nodes found.")
-        print(e)
-        return (point.time, [])
+# Returns a dictionary with the filename as key and a dictionary with the time as key and the list of node ids as value
+def process(G, gpx_files: list[Walk]) -> dict[str, dict[str, list[int]]]:
+    nodes = osmnx.convert.graph_to_gdfs(G, edges=False, node_geometry=False)[["x", "y"]]
+    list_of_nodes = list(nodes.iterrows())
+    distance_m = 25
+    distance = 0.000009 * distance_m
 
-def get_graph():
-    return osmnx.graph_from_place("Barcelona, Spain", network_type="walk", simplify=False)
-
-def process(G):
-    gpx_files = read_directory("./raw_walks/")
-
+    tree = cKDTree(nodes)
+    files = gpx_files
+    result = dict()
     count_files = 0
 
-    files = gpx_files
+    logging.info(f"Processing {len(files)} files")
     for gpx in files:
         count_files += 1
-        print(f"Processing {count_files} / {len(files)} - {gpx.filename}")
-        json_name = f"./processed_walks/{gpx.filename}.json"
-        if os.path.isfile(json_name):
-            continue
-        
-        _process_point = partial(process_point, G=G)
+        logging.info(f"Processing {count_files} / {len(files)} - {gpx.filename}")
 
         nodes = dict()
         for segment in gpx.segments:
-            count = 0
-            print(f"Processing {len(segment.waypoints)} points")
-            p = Pool(5)
-            result = p.imap(_process_point, segment.waypoints)
-    
-            for r in result:
-                nodes[r[0]] = r[1]
-                if count % 10 == 0:
-                    print(f"Processed {count}/{len(segment.waypoints)}")
-                count += 1
-    
-        with open(json_name, "w", encoding="utf-8") as f:
-            json.dump(nodes, f, ensure_ascii=False)
-    
+            for p in segment.waypoints:
+                nodes_nearby = tree.query_ball_point((p.lon, p.lat), distance)
+                nodes_nearby_mapped = [list_of_nodes[x][0] for x in nodes_nearby]
+                nodes[p.time] = nodes_nearby_mapped
+
+        result[gpx.filename] = nodes
+
+    return result

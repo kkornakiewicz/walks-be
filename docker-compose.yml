@@ -7,3 +7,5 @@ services:
     volumes:
       - .:/app  # Mount your local app folder into the container
     tty: true  # Allows you to open a shell in the container if needed
+    stdin_open: true 
+    command: ["python", "app.py"]

@@ -5,7 +5,6 @@ from os import listdir
 import xml.etree.ElementTree as ET
 import osmnx
 
-
 @dataclass
 class Waypoint:
     lat: float
@@ -72,10 +71,6 @@ def read_directory(directory: str) -> list[Walk]:
     for file in files:
         if Path(file).suffix == ".gpx":
             walks.append(read_gpx_file(directory + file))
-            # print(f"GPX file {file} found and parsed.")
-
-        else:
-            print(f"Non-GPX file {file} found, ignoring.")
 
     # Sorting walks by date will make processing easier
     return sorted(walks, key=lambda x: x.start_time())
