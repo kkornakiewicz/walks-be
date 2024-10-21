@@ -29,13 +29,15 @@ def process(G, gpx_files: list[Walk]) -> dict[str, dict[str, list[int]]]:
         count_files += 1
         logging.info(f"Processing {count_files} / {len(files)} - {gpx.filename}")
 
-        nodes = dict()
-        for segment in gpx.segments:
-            for p in segment.waypoints:
-                nodes_nearby = tree.query_ball_point((p.lon, p.lat), distance)
-                nodes_nearby_mapped = [list_of_nodes[x][0] for x in nodes_nearby]
-                nodes[p.time] = nodes_nearby_mapped
+        def process_gpx(gpx, tree, list_of_nodes, distance):
+            nodes = dict()
+            for segment in gpx.segments:
+                for p in segment.waypoints:
+                    nodes_nearby = tree.query_ball_point((p.lon, p.lat), distance)
+                    nodes_nearby_mapped = [list_of_nodes[x][0] for x in nodes_nearby]
+                    nodes[p.time] = nodes_nearby_mapped
+            return nodes
 
-        result[gpx.filename] = nodes
+        result[gpx.filename] = process_gpx(gpx, tree, list_of_nodes, distance)
 
     return result

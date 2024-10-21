@@ -22,6 +22,11 @@ def calculate_stats(
     # Matching walk raw data and processed files
     data = []
     stats = []
+    total_length = 0
+    total_in_graph = len(G.nodes)
+    total_streets = len(nodes_per_street)
+    so_far_nodes = set()
+    so_far_streets = set()
 
     for file in raw_files:
         nodes = set()
@@ -36,12 +41,7 @@ def calculate_stats(
         )
 
         # Calculate stats
-        so_far_nodes = set()
-        so_far_streets = set()
 
-        total_in_graph = len(G.nodes)
-        total_streets = len(nodes_per_street)
-        total_length = 0
 
         for j in data:
             new_nodes = j["nodes"] - so_far_nodes
