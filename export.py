@@ -56,37 +56,52 @@ def df_to_geojson_nodes(df, properties):
     
     return geojson
 
-def export_geojson(G, raw_files: list[Walk], processed_walks: dict[str, dict[str, list[int]]]):
-    # Simplify the graph for better visualization performance
+
+def export_geojson(
+    G, raw_files: list[Walk], processed_walks: dict[str, dict[str, list[int]]]
+):
+    
+    # For performance reasons, I simplify the graph so that the number of nodes and edges is reduced on visualisation
     G_simplified = osmnx.simplify_graph(G)
-    nodes, edges = osmnx.convert.graph_to_gdfs(G_simplified, nodes=True, edges=True, node_geometry=False)
+    nodes = osmnx.convert.graph_to_gdfs(G_simplified, edges=False, node_geometry=False)[["x", "y"]]
+    edges = osmnx.convert.graph_to_gdfs(G_simplified, edges=True, nodes=False)
     edges = edges.reset_index()
 
-    # Process walk data
-    visited_nodes = set()
+    # Matching walk raw data and processed files
+    data = []
     for file in raw_files:
-        visited_nodes.update(sum(processed_walks[file.filename].values(), [])) 
-    visited_nodes = list(visited_nodes)
+        nodes_set = set()
+        for v in processed_walks[file.filename].values():
+            nodes_set.update(v)
+        data.append(
+            {
+                "nodes": list(nodes_set),
+                "length": file.length(),
+                "date": datetime.datetime.fromisoformat(file.start_time()),
+            }
+        )
+    nested_list = [d["nodes"] for d in data]
+    visited_nodes = list(set(sum(nested_list, [])))
+    nodes["visited"] = np.isin(nodes.index, visited_nodes)
 
-    # Update node and edge data
-    nodes["visited"] = nodes.index.isin(visited_nodes) # Mark visited nodes
-    edges["visited"] = edges.apply(lambda row: row["u"] in visited_nodes and row["v"] in visited_nodes, axis=1) # Mark visited edges
-    edges["name"] = edges["name"].fillna("Unnamed road") # Fill missing names
+    edges_geojson = edges.join(nodes, on="u")
+    edges_geojson = edges_geojson.rename(columns={'x': 'start_lon', 'y': "start_lat"})
+    edges_geojson = edges_geojson.drop(columns="visited")
+    edges_geojson = edges_geojson.join(nodes, on="v")
+    edges_geojson = edges_geojson.rename(columns={'x': 'end_lon', 'y': "end_lat"})
+    edges_geojson = edges_geojson.drop(columns="geometry")
+    edges_geojson = edges_geojson.drop(columns="visited")
+    edges_geojson["name"] = edges_geojson["name"].fillna(value="Unnamed road")
+    edges_geojson["visited"] = np.logical_and(np.isin(edges.u,visited_nodes), np.isin(edges.v, visited_nodes))
+    
+    nodes_geo = osmnx.convert.graph_to_gdfs(G_simplified, edges=False, node_geometry=False)[["x", "y"]]
+    nodes_geo = nodes_geo.reset_index()
+    nodes_geo["visited"] = np.isin(nodes_geo.osmid, visited_nodes)
 
-    # Prepare edge data for GeoJSON conversion
-    edges_geojson = edges.join(nodes[["x", "y"]], on="u").rename(columns={"x": "start_lon", "y": "start_lat"}) # Join start node coordinates
-    edges_geojson = edges_geojson.join(nodes[["x", "y"]], on="v").rename(columns={"x": "end_lon", "y": "end_lat"}) # Join end node coordinates
-    edges_geojson = edges_geojson.drop(columns=["geometry", "visited_x", "visited_y"]) # Drop unused columns
-
-    # Prepare node data for GeoJSON conversion
-    nodes_geo = nodes.reset_index() # Reset index to make it a column
-
-    # Export edges as GeoJSON
-    export_edges = df_to_geojson_edges(edges_geojson, ["name", "osmid", "visited"])
+    export_edges = df_to_geojson_edges(edges_geojson, ["name", "osmid","visited"])
     with open('output/edges.json', 'w', encoding='utf-8') as f:
         json.dump(export_edges, f)
 
-    # Export nodes as GeoJSON
     export_nodes = df_to_geojson_nodes(nodes_geo, ["osmid", "visited"])
     with open('output/nodes.json', 'w', encoding='utf-8') as f:
         json.dump(export_nodes, f)
