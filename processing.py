@@ -1,6 +1,6 @@
 import logging
 import config
-from parsing import Walk 
+from parsing import Walk
 import osmnx
 from scipy.spatial import cKDTree
 

@@ -2,7 +2,6 @@ from collections import defaultdict
 import datetime
 import osmnx
 import pandas as pd
-
 from parsing import Walk
 
 
@@ -42,7 +41,6 @@ def calculate_stats(
 
         # Calculate stats
 
-
         for j in data:
             new_nodes = j["nodes"] - so_far_nodes
             so_far_nodes.update(j["nodes"])
@@ -53,7 +51,10 @@ def calculate_stats(
             so_far_in_a_street = nodes & so_far_nodes
 
             # If vistited at least 90% of streets nodes, it's marked as completed
-            if len(so_far_in_a_street) / len(nodes) > 0.9 and not street in so_far_streets:
+            if (
+                len(so_far_in_a_street) / len(nodes) > 0.9
+                and not street in so_far_streets
+            ):
                 so_far_streets.add(street)
                 new_streets += 1
 

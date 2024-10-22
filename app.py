@@ -9,6 +9,7 @@ import os
 
 logging.basicConfig(level=logging.INFO)
 
+
 def main():
     logging.info("Starting")
     logging.info("Downloading graph")
@@ -22,7 +23,6 @@ def main():
     processed_walks = process(G, raw_files)
     logging.info("Done")
 
-
     if not os.path.exists("output"):
         os.makedirs("output")
 
@@ -33,6 +33,7 @@ def main():
     logging.info("Exporting to GeoJSON")
     export_geojson(G, raw_files, processed_walks)
     logging.info("Done")
+
 
 # Main
 if __name__ == "__main__":

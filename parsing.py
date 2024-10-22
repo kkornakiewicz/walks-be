@@ -5,6 +5,7 @@ from os import listdir
 import xml.etree.ElementTree as ET
 import osmnx
 
+
 @dataclass
 class Waypoint:
     lat: float
@@ -74,4 +75,3 @@ def read_directory(directory: str) -> list[Walk]:
 
     # Sorting walks by date will make processing easier
     return sorted(walks, key=lambda x: x.start_time())
-
