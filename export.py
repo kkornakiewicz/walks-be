@@ -1,6 +1,5 @@
 import datetime
 import json
-from pathlib import Path
 from parsing import Walk
 import osmnx
 import numpy as np

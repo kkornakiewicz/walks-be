@@ -1,14 +1,7 @@
 import logging
-from parsing import Walk, read_gpx_file, read_directory, Waypoint
+import config
+from parsing import Walk 
 import osmnx
-import geopandas as gpd
-from shapely.geometry import Point
-import pandas as pd
-import json
-import os.path
-from os import listdir
-from pathlib import Path
-from multiprocessing import Pool
 from scipy.spatial import cKDTree
 
 
@@ -16,7 +9,7 @@ from scipy.spatial import cKDTree
 def process(G, gpx_files: list[Walk]) -> dict[str, dict[str, list[int]]]:
     nodes = osmnx.convert.graph_to_gdfs(G, edges=False, node_geometry=False)[["x", "y"]]
     list_of_nodes = list(nodes.iterrows())
-    distance_m = 25
+    distance_m = config.DISTANCE
     distance = 0.000009 * distance_m
 
     tree = cKDTree(nodes)
@@ -25,6 +18,7 @@ def process(G, gpx_files: list[Walk]) -> dict[str, dict[str, list[int]]]:
     count_files = 0
 
     logging.info(f"Processing {len(files)} files")
+
     for gpx in files:
         count_files += 1
         logging.info(f"Processing {count_files} / {len(files)} - {gpx.filename}")

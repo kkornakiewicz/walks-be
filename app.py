@@ -1,6 +1,7 @@
+import config
 from export import export_geojson
 from parsing import read_directory
-from preprocessing import process
+from processing import process
 import osmnx
 import logging
 from stats import calculate_stats
@@ -8,11 +9,10 @@ import os
 
 logging.basicConfig(level=logging.INFO)
 
-
 def main():
     logging.info("Starting")
     logging.info("Downloading graph")
-    G = osmnx.graph_from_place("Barcelona, Spain", network_type="walk", simplify=False)
+    G = osmnx.graph_from_place(config.GEOGRAPHY, network_type="walk", simplify=False)
 
     logging.info("Reading GPX files")
     raw_files = read_directory("./raw_walks/")
@@ -33,7 +33,6 @@ def main():
     logging.info("Exporting to GeoJSON")
     export_geojson(G, raw_files, processed_walks)
     logging.info("Done")
-
 
 # Main
 if __name__ == "__main__":
