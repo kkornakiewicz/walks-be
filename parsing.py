@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import os
 from pathlib import Path
 from os import listdir
 
@@ -39,8 +40,7 @@ class Walk:
         return total
 
 
-def read_gpx_file(file: str) -> int:
-    count = 0
+def read_gpx_file(file: str) -> Walk:
     segments = []
     filename = Path(file).stem  # Directory and extension is dropped
 
@@ -58,7 +58,7 @@ def read_gpx_file(file: str) -> int:
             lat = float(p.attrib["lat"])
             time = p.find(".//gpx:time", namespaces).text
 
-            points.append(Waypoint(lon=lon, lat=lat, time=time))
+            points.append(Waypoint(lat=lat, lon=lon, time=time))
 
         segments.append(Segment(waypoints=points))
 
@@ -71,7 +71,7 @@ def read_directory(directory: str) -> list[Walk]:
 
     for file in files:
         if Path(file).suffix == ".gpx":
-            walks.append(read_gpx_file(directory + file))
+            walks.append(read_gpx_file(os.path.join(directory, file)))
 
     # Sorting walks by date will make processing easier
     return sorted(walks, key=lambda x: x.start_time())

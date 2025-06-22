@@ -80,6 +80,6 @@ def calculate_stats(
         )
     stats_df = pd.DataFrame.from_dict(stats)
 
-    # Saving to CSV
-    stats_df.to_csv("./output/stats.csv", index=False)
+    # Saving to JSON
+    stats_df.to_json("./output/stats.json", orient="records", indent=4)
     return

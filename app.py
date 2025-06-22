@@ -27,7 +27,7 @@ def main():
         os.makedirs("output")
 
     logging.info("Calculating stats")
-    stats = calculate_stats(G, raw_files, processed_walks)
+    calculate_stats(G, raw_files, processed_walks)
     logging.info("Done")
 
     logging.info("Exporting to GeoJSON")

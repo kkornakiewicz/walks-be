@@ -5,14 +5,16 @@ FROM continuumio/miniconda3
 WORKDIR /app
 
 # Create a new conda environment with Python and osmnx dependencies
-RUN conda create -n osmnx_env python=3.11 && \
-    echo "source activate osmnx_env" > ~/.bashrc
+RUN conda create -n osmnx_env python=3.11 -y
 
 # Activate the conda environment and install osmnx and its dependencies
-RUN /bin/bash -c "source activate osmnx_env && conda install -y -c conda-forge --strict-channel-priority osmnx"
+RUN conda run -n osmnx_env conda install -y -c conda-forge --strict-channel-priority osmnx
 
-# Copy your application code (if any) into the container
+# Copy your application code into the container
 COPY . /app
 
-# Set the default command to activate the conda environment and run your Python script
-CMD ["/bin/bash", "-c", "source activate osmnx_env"]
+# Make sure we use the conda environment by default
+ENV PATH /opt/conda/envs/osmnx_env/bin:$PATH
+
+# Set the default command to run python in the conda environment
+CMD ["python", "app.py"]
